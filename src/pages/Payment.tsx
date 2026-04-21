@@ -122,16 +122,22 @@ export default function Payment() {
             navigate('/success', { state: { transaction: statusData.transaction || data.payment } });
             return;
           } else if (statusData.status === 'failed' || statusData.status === 'canceled') {
-            await setDoc(doc(db, 'transactions', reference), { status: 'failed', failReason: 'Paiement échoué ou annulé' }, { merge: true });
+            const reason = statusData.reason || 'Paiement échoué ou annulé';
+            await setDoc(doc(db, 'transactions', reference), { status: 'failed', failReason: reason }, { merge: true });
             setIsProcessing(false);
-            setError('Le paiement a échoué ou a été annulé par l\'utilisateur.');
+            
+            if (reason.toLowerCase().includes('solde') || reason.toLowerCase().includes('insufficient')) {
+              setError('solde insuffisant');
+            } else {
+              setError(reason);
+            }
             return;
           }
 
           attempts++;
           if (attempts >= maxAttempts) {
             setIsProcessing(false);
-            setError('Délai d\'attente dépassé. Veuillez vérifier votre téléphone.');
+            setError(t.payment.timeoutError);
             return;
           }
 
@@ -153,7 +159,12 @@ export default function Payment() {
     } catch (err: any) {
       console.error(err);
       setIsProcessing(false);
-      setError(err.message || 'Une erreur est survenue');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('solde') || msg.toLowerCase().includes('insufficient')) {
+        setError('solde insuffisant');
+      } else {
+        setError(msg || 'Une erreur est survenue');
+      }
     }
   };
 

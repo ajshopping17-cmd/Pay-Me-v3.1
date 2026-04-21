@@ -66,7 +66,8 @@ export const translations = {
       statusEncrypting: "STATUT : CHIFFREMENT",
       bankGrade: "SÉCURITÉ BANCAIRE ACTIVÉE",
       failedTitle: "Paiement Échoué",
-      insufficientBalance: "Paiement échoué, raison : solde insuffisant. Veuillez recharger votre compte et relancer la transaction",
+      insufficientBalance: "solde insuffisant. Veuillez recharger votre compte et recommencer",
+      timeoutError: "Durée d'attente de la transaction expirée",
     },
     success: {
       title: "Paiement Réussi",
@@ -146,7 +147,8 @@ export const translations = {
       statusEncrypting: "STATUS: ENCRYPTING",
       bankGrade: "BANK-GRADE SECURITY ENABLED",
       failedTitle: "Payment Failed",
-      insufficientBalance: "Payment failed, reason: insufficient balance. Please top up your account and restart the transaction",
+      insufficientBalance: "insufficient balance. Please top up your account and try again",
+      timeoutError: "Transaction timeout expired",
     },
     success: {
       title: "Payment Successful",

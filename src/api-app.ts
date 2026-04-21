@@ -144,6 +144,7 @@ router.get("/payment-status/:reference", async (req, res) => {
 
   try {
     let currentStatus = 'pending';
+    let failReason = '';
 
     if (provider === 'mesomb') {
       const meAppKey = (process.env.MESOMB_APPLICATION_KEY || '').trim();
@@ -160,9 +161,13 @@ router.get("/payment-status/:reference", async (req, res) => {
         try {
           const txs = await client.getTransactions([(gatewayRef as string) || reference]);
           if (txs && txs.length > 0) {
-            const rawStatus = txs[0].status;
+            const tx = txs[0] as any;
+            const rawStatus = tx.status;
             if (rawStatus === 'SUCCESS') currentStatus = 'success';
-            else if (rawStatus === 'FAIL') currentStatus = 'failed';
+            else if (rawStatus === 'FAIL') {
+              currentStatus = 'failed';
+              failReason = tx.message || tx.detail || 'Transaction échouée';
+            }
             else currentStatus = 'pending';
           }
         } catch (e) {
@@ -171,7 +176,7 @@ router.get("/payment-status/:reference", async (req, res) => {
       }
     }
 
-    res.status(200).json({ status: currentStatus, transaction: { reference, gatewayRef } });
+    res.status(200).json({ status: currentStatus, reason: failReason, transaction: { reference, gatewayRef } });
   } catch (error: any) {
     console.error("Status check error:", error);
     res.status(500).json({ error: error.message || 'Erreur lors de la vérification du statut' });
