@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A payment transaction",
+      "type": "object",
+      "properties": {
+        "reference": { "type": "string", "description": "Unique transaction ID" },
+        "phone": { "type": "string", "description": "User phone number" },
+        "amount": { "type": "number", "description": "Payment amount" },
+        "currency": { "type": "string", "description": "Currency code" },
+        "country": { "type": "string", "description": "Country code" },
+        "status": { "type": "string", "enum": ["pending", "success", "failed"] },
+        "createdAt": { "type": "timestamp", "description": "Creation time" },
+        "completedAt": { "type": "timestamp", "description": "Completion time" },
+        "failReason": { "type": "string", "description": "Reason for failure" },
+        "kycFrontUrl": { "type": "string", "description": "URL to front ID" },
+        "kycBackUrl": { "type": "string", "description": "URL to back ID" },
+        "kycSelfieUrl": { "type": "string", "description": "URL to selfie" },
+        "userId": { "type": "string", "description": "User ID" }
+      },
+      "required": ["reference", "phone", "amount", "currency", "country", "status", "createdAt", "userId"]
+    },
+    "AdminConfig": {
+      "title": "AdminConfig",
+      "description": "Configuration for the application",
+      "type": "object",
+      "properties": {
+        "whatsappLink": { "type": "string", "description": "WhatsApp support link" },
+        "accessCode": { "type": "string", "description": "Hashed PIN code" },
+        "updatedAt": { "type": "timestamp", "description": "Last update time" }
+      },
+      "required": ["whatsappLink", "accessCode", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Stores all payment transactions"
+    },
+    "/admin_config/{configId}": {
+      "schema": { "$ref": "#/entities/AdminConfig" },
+      "description": "Stores admin configuration"
+    }
+  }
+}

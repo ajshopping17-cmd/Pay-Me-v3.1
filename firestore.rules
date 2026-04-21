@@ -1,0 +1,81 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Hardened validation for Transaction
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['reference', 'phone', 'amount', 'currency', 'country', 'status', 'createdAt', 'userId']) &&
+             data.keys().size() >= 8 &&
+             data.reference is string && data.reference.size() <= 100 &&
+             data.phone is string && data.phone.size() <= 20 &&
+             data.amount is number && data.amount > 0 &&
+             data.currency is string && data.currency.size() >= 2 && data.currency.size() <= 5 &&
+             data.country is string && data.country.size() <= 50 &&
+             data.status in ['pending', 'success', 'failed'] &&
+             data.createdAt == request.time &&
+             data.userId is string && data.userId.size() <= 128;
+    }
+
+    // Hardened validation for AdminConfig
+    function isValidAdminConfig(data) {
+      return data.keys().hasAll(['whatsappLink', 'accessCode', 'updatedAt']) &&
+             data.whatsappLink is string && data.whatsappLink.size() <= 200 &&
+             data.accessCode is string && data.accessCode.size() <= 10 &&
+             data.updatedAt == request.time;
+    }
+
+    // --- Collections ---
+
+    match /transactions/{transactionId} {
+      // Identity Protection: Anyone can create a transaction (public checkout)
+      // but only if it follows the strict schema.
+      allow create: if isValidTransaction(incoming()) && isValidId(transactionId);
+      
+      // Update protection: Only allow updating 'status', 'completedAt', 'failReason'
+      // and ensure identity fields are immutable.
+      allow update: if (
+        incoming().reference == existing().reference &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().phone == existing().phone &&
+        incoming().amount == existing().amount &&
+        isValidTransaction(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'completedAt', 'failReason', 'kycFrontUrl', 'kycBackUrl', 'kycSelfieUrl'])
+      );
+
+      // Read protection: In a real app we'd restrict list, but here the Admin page needs it.
+      // We allow get if you know the reference (transactionId).
+      allow get: if true;
+      allow list: if true; // Public list allowed for this specific app's simple admin
+    }
+
+    match /admin_config/{configId} {
+      allow read: if true;
+      allow create, update: if isValidAdminConfig(incoming()) && isValidId(configId);
+      allow delete: if false;
+    }
+  }
+}

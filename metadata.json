@@ -1,0 +1,7 @@
+{
+  "name": "Remix: Pay-Me",
+  "description": "Mini Application de Paiement — Offre Prêt Tik Tak+ d\u0027Orange Bank",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
