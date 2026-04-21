@@ -67,9 +67,16 @@ router.post("/initiate-payment", async (req, res) => {
     let paymentData: any = {};
 
     // ===== TOUT VIA MESOMB (Cameroun, Sénégal, etc.) =====
-    const meAppKey = process.env.MESOMB_APPLICATION_KEY;
-    const meAccKey = process.env.MESOMB_ACCESS_KEY;
-    const meSecKey = process.env.MESOMB_SECRET_KEY;
+    const meAppKey = (process.env.MESOMB_APPLICATION_KEY || '').trim();
+    const meAccKey = (process.env.MESOMB_ACCESS_KEY || '').trim();
+    const meSecKey = (process.env.MESOMB_SECRET_KEY || '').trim();
+
+    console.log("MeSomb Keys Check:", {
+      appKeyLength: meAppKey.length,
+      accKeyPrefix: meAccKey.substring(0, 4),
+      secKeyPrefix: meSecKey.substring(0, 4),
+      appKeyPrefix: meAppKey.substring(0, 4)
+    });
 
     if (!meAppKey || !meAccKey || !meSecKey) {
       return res.status(500).json({ error: 'Clés API MeSomb manquantes (MESOMB_APPLICATION_KEY, MESOMB_ACCESS_KEY, MESOMB_SECRET_KEY) dans les Settings.' });
@@ -139,9 +146,9 @@ router.get("/payment-status/:reference", async (req, res) => {
     let currentStatus = 'pending';
 
     if (provider === 'mesomb') {
-      const meAppKey = process.env.MESOMB_APPLICATION_KEY;
-      const meAccKey = process.env.MESOMB_ACCESS_KEY;
-      const meSecKey = process.env.MESOMB_SECRET_KEY;
+      const meAppKey = (process.env.MESOMB_APPLICATION_KEY || '').trim();
+      const meAccKey = (process.env.MESOMB_ACCESS_KEY || '').trim();
+      const meSecKey = (process.env.MESOMB_SECRET_KEY || '').trim();
 
       if (meAppKey && meAccKey && meSecKey) {
         const client = new PaymentOperation({
