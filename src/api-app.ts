@@ -196,7 +196,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-// Mount the router under /api
+// Mount the router under both /api and / for compatibility with Netlify Functions
 app.use("/api", router);
+app.use("/", router);
 
 export default app;

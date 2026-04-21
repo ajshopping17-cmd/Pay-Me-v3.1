@@ -78,6 +78,17 @@ export default function Payment() {
         })
       });
 
+      if (!response.ok && response.status === 404) {
+        throw new Error("L'API n'a pas été trouvée sur le serveur (Erreur 404). Vérifiez le déploiement.");
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text.substring(0, 100));
+        throw new Error("Le serveur a renvoyé une réponse invalide (HTML au lieu de JSON).");
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -114,6 +125,16 @@ export default function Payment() {
              gatewayRef: paymentInfo.gatewayRef
           });
           const statusRes = await fetch(`/api/payment-status/${reference}?${queryParams.toString()}`);
+          
+          if (!statusRes.ok && statusRes.status === 404) {
+            throw new Error("L'API de statut n'est pas accessible.");
+          }
+
+          const statusContentType = statusRes.headers.get("content-type");
+          if (!statusContentType || !statusContentType.includes("application/json")) {
+             throw new Error("Réponse de statut invalide.");
+          }
+          
           const statusData = await statusRes.json();
 
           if (statusData.status === 'complete' || statusData.status === 'successful' || statusData.status === 'success') {
