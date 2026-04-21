@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import { PayunitClient } from "@payunit/nodejs-sdk";
 import { PaymentOperation } from "@hachther/mesomb";
 
 const app = express();
@@ -10,14 +9,6 @@ app.use(cors());
 app.use(express.json());
 
 // Helpers for operators
-function getPayUnitGateway(phone: string) {
-  const p = phone.replace(/(?!^\+)[^\d]/g, '').replace('+', '');
-  if (/^(237)?(67|68|650|651|652|653|654)\d{7}$/.test(p)) {
-    return 'CM_MTNMOMO';
-  }
-  return 'CM_ORANGE';
-}
-
 function getMesombService(phone: string, country: string = 'CM') {
   const p = phone.replace(/(?!^\+)[^\d]/g, '').replace('+', '');
   
@@ -40,7 +31,12 @@ function getMesombService(phone: string, country: string = 'CM') {
 }
 
 // API Routes
+router.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
 router.post("/initiate-payment", async (req, res) => {
+  console.log("Received payment request:", req.body);
   const { phone, amount, currency, countryCode, email, userId } = req.body;
 
   if (!phone || !amount || !currency) {
@@ -124,8 +120,8 @@ router.post("/initiate-payment", async (req, res) => {
     res.status(200).json({ reference: payment.reference, payment });
 
   } catch (error: any) {
-    console.error("Payment error:", error);
-    res.status(500).json({ error: error.message || 'Une erreur est survenue' });
+    console.error("Payment initiation error:", error);
+    res.status(500).json({ error: error.message || 'Une erreur est survenue lors de l\'initiation du paiement' });
   }
 });
 
@@ -133,6 +129,8 @@ router.get("/payment-status/:reference", async (req, res) => {
   const { reference } = req.params;
   const { provider, gatewayRef } = req.query; 
   
+  console.log(`Checking status for ${reference} via ${provider}`);
+
   if (!provider) {
      return res.status(400).json({ error: 'Provider inconnu' });
   }
@@ -140,28 +138,7 @@ router.get("/payment-status/:reference", async (req, res) => {
   try {
     let currentStatus = 'pending';
 
-    if (provider === 'payunit') {
-      const payunitKey = process.env.PAYUNIT_API_KEY;
-      const payunitUser = process.env.PAYUNIT_USER;
-      const payunitPass = process.env.PAYUNIT_PASSWORD;
-
-      if (payunitKey && payunitUser && payunitPass) {
-        const puClient = new PayunitClient({
-          apiKey: payunitKey,
-          apiUsername: payunitUser,
-          apiPassword: payunitPass,
-          mode: 'live' 
-        });
-
-        // Use gatewayRef for PayUnit
-        const puStatus = await puClient.collections.getTransactionStatus((gatewayRef as string) || reference);
-        // Map payunit status
-        const rawStatus = (puStatus as any).transaction_status || (puStatus as any).status || 'pending';
-        if (rawStatus === 'SUCCESS' || rawStatus === 'SUCCESSFUL' || rawStatus === 'successful') currentStatus = 'success';
-        else if (rawStatus === 'FAILED' || rawStatus === 'failed') currentStatus = 'failed';
-        else currentStatus = 'pending';
-      }
-    } else if (provider === 'mesomb') {
+    if (provider === 'mesomb') {
       const meAppKey = process.env.MESOMB_APPLICATION_KEY;
       const meAccKey = process.env.MESOMB_ACCESS_KEY;
       const meSecKey = process.env.MESOMB_SECRET_KEY;
@@ -173,12 +150,16 @@ router.get("/payment-status/:reference", async (req, res) => {
           secretKey: meSecKey
         });
 
-        const txs = await client.getTransactions([(gatewayRef as string) || reference]);
-        if (txs && txs.length > 0) {
-          const rawStatus = txs[0].status;
-          if (rawStatus === 'SUCCESS') currentStatus = 'success';
-          else if (rawStatus === 'FAIL') currentStatus = 'failed';
-          else currentStatus = 'pending';
+        try {
+          const txs = await client.getTransactions([(gatewayRef as string) || reference]);
+          if (txs && txs.length > 0) {
+            const rawStatus = txs[0].status;
+            if (rawStatus === 'SUCCESS') currentStatus = 'success';
+            else if (rawStatus === 'FAIL') currentStatus = 'failed';
+            else currentStatus = 'pending';
+          }
+        } catch (e) {
+          console.error("MeSomb status check failed:", e);
         }
       }
     }
@@ -186,7 +167,7 @@ router.get("/payment-status/:reference", async (req, res) => {
     res.status(200).json({ status: currentStatus, transaction: { reference, gatewayRef } });
   } catch (error: any) {
     console.error("Status check error:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message || 'Erreur lors de la vérification du statut' });
   }
 });
 
@@ -195,6 +176,12 @@ router.post("/payment-webhook", async (req, res) => {
   const { reference, status, event } = req.body;
   // Process webhook...
   res.status(200).json({ received: true });
+});
+
+// App Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Server-side Error caught by middleware:", err);
+  res.status(500).json({ error: "Internal Server Error" });
 });
 
 // Mount the router under /api
