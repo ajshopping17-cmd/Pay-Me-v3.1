@@ -67,6 +67,7 @@ export const translations = {
       bankGrade: "SÉCURITÉ BANCAIRE ACTIVÉE",
       failedTitle: "Paiement Échoué",
       insufficientBalance: "solde insuffisant. Veuillez recharger votre compte et recommencer",
+      invalidConfig: "Erreur technique de paiement. Veuillez contacter le support.",
       timeoutError: "Durée d'attente de la transaction expirée",
     },
     success: {

@@ -92,7 +92,14 @@ export default function Payment() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Payment initiation failed');
+        if (data.errorCode === 'ERR_INSUFFICIENT_BALANCE') {
+            setError('solde insuffisant');
+        } else if (data.errorCode === 'ERR_INVALID_CONFIG') {
+            setError('erreur de configuration');
+        } else {
+            throw new Error(data.error || 'Payment initiation failed');
+        }
+        return; // Exit after setting error
       }
 
       const reference = data.reference;
@@ -403,7 +410,8 @@ export default function Payment() {
                 </div>
                 <h2 className="text-xl font-bold text-[#1A1A1A] mb-3">{t.payment.failedTitle}</h2>
                 <p className="text-gray-600 text-sm mb-8 leading-relaxed">
-                  {error === 'solde insuffisant' ? t.payment.insufficientBalance : error}
+                  {error === 'solde insuffisant' ? t.payment.insufficientBalance : 
+                   error === 'erreur de configuration' ? t.payment.invalidConfig : error}
                 </p>
                 <button 
                   onClick={() => setError('')}

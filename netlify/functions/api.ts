@@ -107,7 +107,13 @@ router.post("/initiate-payment", async (req, res) => {
     });
 
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Erreur initiation' });
+    const message = error.message || 'Erreur initiation';
+    let errorCode = 'ERR_GENERAL';
+    if (message.includes('solde') || message.includes('insufficient')) errorCode = 'ERR_INSUFFICIENT_BALANCE';
+    else if (message.includes('expired')) errorCode = 'ERR_TIMEOUT';
+    else if (message.includes('Invalid credentials')) errorCode = 'ERR_INVALID_CONFIG';
+    
+    res.status(500).json({ error: message, errorCode });
   }
 });
 

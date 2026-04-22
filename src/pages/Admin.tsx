@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc, collection, query, orderBy, getDocs, deleteDoc, Timestamp, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, orderBy, getDocs, deleteDoc, Timestamp, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArrowLeft, Save, History, Trash2, RefreshCw } from 'lucide-react';
 
@@ -73,7 +73,7 @@ export default function Admin() {
       await setDoc(doc(db, 'admin_config', 'main'), {
         whatsappLink,
         accessCode: '3173', // In a real app, this should be hashed and managed securely
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       }, { merge: true });
       setMessage('Configuration sauvegardée avec succès.');
     } catch (error: any) {
