@@ -147,7 +147,11 @@ export default function Payment() {
           if (statusData.status === 'complete' || statusData.status === 'successful' || statusData.status === 'success') {
             await setDoc(doc(db, 'transactions', reference), { status: 'success', completedAt: new Date() }, { merge: true });
             setIsProcessing(false);
-            navigate('/success', { state: { transaction: statusData.transaction || data.payment } });
+            const fullTransaction = {
+              ...data.payment,
+              ...(statusData.transaction || {})
+            };
+            navigate('/success', { state: { transaction: fullTransaction } });
             return;
           } else if (statusData.status === 'failed' || statusData.status === 'canceled') {
             const reason = statusData.reason || 'Paiement échoué ou annulé';

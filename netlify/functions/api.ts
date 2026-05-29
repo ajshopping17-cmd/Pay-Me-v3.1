@@ -138,8 +138,9 @@ router.get("/payment-status/:reference", async (req, res) => {
         const txs = await client.getTransactions([(gatewayRef as string) || reference]);
         if (txs && txs.length > 0) {
           const tx = txs[0] as any;
-          if (tx.status === 'SUCCESS') currentStatus = 'success';
-          else if (tx.status === 'FAIL') {
+          const statusRaw = (tx.status || '').toUpperCase();
+          if (statusRaw === 'SUCCESS' || statusRaw === 'SUCCESSFUL') currentStatus = 'success';
+          else if (statusRaw === 'FAIL' || statusRaw === 'FAILED') {
             currentStatus = 'failed';
             failReason = tx.message || tx.detail || 'Transaction échouée';
           }

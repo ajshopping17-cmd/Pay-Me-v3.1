@@ -128,7 +128,7 @@ export default function Success() {
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center bg-white text-[#1A1A1A] border-2 border-gray-100 font-black py-5 px-6 rounded-sm hover:border-gray-200 transition-all uppercase tracking-[0.2em] text-xs"
               >
-                Contacter le support
+                {t.success.contactSupport}
               </a>
             )}
           </div>
