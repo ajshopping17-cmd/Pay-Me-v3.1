@@ -35,7 +35,6 @@ service cloud.firestore {
              data.currency is string && data.currency.size() >= 2 && data.currency.size() <= 5 &&
              data.country is string && data.country.size() <= 50 &&
              data.status in ['pending', 'success', 'failed'] &&
-             data.createdAt == request.time &&
              data.userId is string && data.userId.size() <= 128;
     }
 
@@ -52,7 +51,7 @@ service cloud.firestore {
     match /transactions/{transactionId} {
       // Identity Protection: Anyone can create a transaction (public checkout)
       // but only if it follows the strict schema.
-      allow create: if isValidTransaction(incoming()) && isValidId(transactionId);
+      allow create: if isValidTransaction(incoming()) && isValidId(transactionId) && incoming().createdAt == request.time;
       
       // Update protection: Only allow updating 'status', 'completedAt', 'failReason'
       // and ensure identity fields are immutable.

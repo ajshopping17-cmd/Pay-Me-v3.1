@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, ArrowRight, Lock, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageToggle from '../components/LanguageToggle';
@@ -115,7 +115,7 @@ export default function Payment() {
         currency: selectedCountry.currency,
         country: selectedCountry.name,
         status: 'pending',
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
         userId: userId,
       };
 
@@ -145,7 +145,7 @@ export default function Payment() {
           const statusData = await statusRes.json();
 
           if (statusData.status === 'complete' || statusData.status === 'successful' || statusData.status === 'success') {
-            await setDoc(doc(db, 'transactions', reference), { status: 'success', completedAt: new Date() }, { merge: true });
+            await setDoc(doc(db, 'transactions', reference), { status: 'success', completedAt: serverTimestamp() }, { merge: true });
             setIsProcessing(false);
             const fullTransaction = {
               ...data.payment,
