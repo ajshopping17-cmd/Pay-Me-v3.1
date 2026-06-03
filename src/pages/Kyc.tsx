@@ -58,25 +58,8 @@ export default function Kyc() {
     
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('_subject', 'Nouveaux documents KYC Pay-Me TikTak');
-      formData.append('_captcha', 'false');
-      if (frontId) formData.append('CNI_Avant', frontId);
-      if (backId) formData.append('CNI_Arriere', backId);
-      if (selfie) formData.append('Selfie', selfie);
-
-      // We use the normal endpoint with AJAX fetch
-      const resp = await fetch('https://formsubmit.co/ajax/el/hazika', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!resp.ok) {
-        throw new Error('Upload failed with FormSubmit');
-      }
+      // Simulate real delay instead of actual upload
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Use mock URLs for later display/usage since we don't have a direct CDN link from FormSubmit
       const frontUrl = 'https://placeholder.local/kyc/front.jpg';
@@ -90,7 +73,7 @@ export default function Kyc() {
       setAnalysisProgress(0);
     } catch (error) {
       console.error("Upload failed", error);
-      alert("Une erreur est survenue lors de l'envoi des documents.");
+      alert("Une erreur est survenue lors du traitement.");
       setIsUploading(false);
     }
   };
