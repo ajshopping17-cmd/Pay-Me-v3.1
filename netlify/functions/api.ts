@@ -78,7 +78,7 @@ router.post("/initiate-payment", async (req, res) => {
       payer: sanitizedPhone,
       country: finalCountry,
       currency: currency,
-      message: 'Pay-Me TikTak', 
+      message: 'Pay-Me by TikTak', 
       customer: {
         email: email || 'anonymous@pay-me.local'
       }
